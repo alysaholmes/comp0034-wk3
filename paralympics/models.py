@@ -1,6 +1,7 @@
 # Adapted from https://flask-sqlalchemy.palletsprojects.com/en/3.1.x/quickstart/#define-models
 from typing import List
 from sqlalchemy import ForeignKey
+from sqlalchemy import Column, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from paralympics import db
 
@@ -46,3 +47,30 @@ class User(db.Model):
     id: Mapped[int] = mapped_column(db.Integer, primary_key=True)
     email: Mapped[str] = mapped_column(db.String, unique=True, nullable=False)
     password: Mapped[str] = mapped_column(db.String, unique=True, nullable=False)
+
+def to_json(self):
+        return json.dumps(self.__dict__)
+
+
+# To use, create a User object by querying the database for the user with the id 1, serialise using to_json and then print the result
+user = db.session.execute(db.select(User).order_by(User.username)).scalars()
+user_json = user.to_json()
+print(user_json)
+
+class Region(db.Model):
+    __tablename__ = "region"
+    # Primary key attribute
+    NOC: Mapped[str] = mapped_column(db.Text, primary_key=True)
+    # Add a relationship to Event. The Region then has a record of the Events associated with it. 
+    # This references the relationship 'region' in the Event table.
+    events: Mapped[List["Event"]] = relationship(back_populates="region")
+
+
+class Event(db.Model):
+    __tablename__ = "event"
+    # add ForeignKey that maps to the primary key of the Region table
+    NOC: Mapped[str] = mapped_column(ForeignKey("region.NOC"))
+    # add relationship to Region, this references the relationship 'events' that is in the Region table
+    region: Mapped["Region"] = relationship(back_populates="events")
+
+    
